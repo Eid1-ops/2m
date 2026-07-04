@@ -157,10 +157,48 @@ function Hero() {
 
 function CircularMenu() {
   const ref = useRef<HTMLDivElement>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
-  const counterRotate = useTransform(scrollYProgress, [0, 1], [0, -360]);
+  const scrollRotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
+  const dragOffset = useMotionValue(0);
+  const rotate = useTransform<number, number>(
+    [scrollRotate, dragOffset],
+    ([s, d]) => s + d,
+  );
+  const counterRotate = useTransform(rotate, (r) => -r);
   const radius = 240;
+
+  const [selected, setSelected] = useState<MenuItem | null>(null);
+  const dragState = useRef({ dragging: false, lastAngle: 0, moved: 0 });
+
+  const angleFromCenter = (clientX: number, clientY: number) => {
+    const el = wheelRef.current;
+    if (!el) return 0;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragState.current.dragging = true;
+    dragState.current.moved = 0;
+    dragState.current.lastAngle = angleFromCenter(e.clientX, e.clientY);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragState.current.dragging) return;
+    const a = angleFromCenter(e.clientX, e.clientY);
+    let delta = a - dragState.current.lastAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    dragState.current.lastAngle = a;
+    dragState.current.moved += Math.abs(delta);
+    dragOffset.set(dragOffset.get() + delta);
+  };
+  const onPointerUp = () => {
+    dragState.current.dragging = false;
+  };
 
   return (
     <section id="menu" ref={ref} className="relative py-32 md:py-48 overflow-hidden bg-ink">
@@ -174,8 +212,16 @@ function CircularMenu() {
         <p className="mt-4 text-foreground/60 font-serif-lux italic" dir="rtl">اختيارات دقيقة من ماسترز القهوة</p>
       </div>
 
-      <div className="relative h-[600px] md:h-[700px] flex items-center justify-center">
-        <motion.div style={{ rotate }} className="relative w-[500px] h-[500px] md:w-[640px] md:h-[640px]">
+      <div className="relative h-[600px] md:h-[700px] flex items-center justify-center touch-none select-none">
+        <motion.div
+          ref={wheelRef}
+          style={{ rotate }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className="relative w-[500px] h-[500px] md:w-[640px] md:h-[640px] cursor-grab active:cursor-grabbing"
+        >
           {/* Outer decorative rings */}
           <div className="absolute inset-0 rounded-full border border-[var(--gold)]/30" />
           <div className="absolute inset-8 rounded-full border border-[var(--gold)]/20" />
@@ -198,11 +244,19 @@ function CircularMenu() {
               >
                 <motion.div
                   style={{ rotate: counterRotate }}
-                  className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-[var(--gold-deep)]/20 to-ink border border-[var(--gold)]/40 backdrop-blur-sm flex flex-col items-center justify-center text-center px-2 hover:scale-110 transition-transform shadow-[0_0_30px_rgba(200,160,80,0.15)]"
+                  onClick={(e) => {
+                    if (dragState.current.moved > 8) { e.preventDefault(); return; }
+                    setSelected(item);
+                  }}
+                  className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border border-[var(--gold)]/40 backdrop-blur-sm flex flex-col items-center justify-center text-center hover:scale-110 hover:border-[var(--gold)] transition-all shadow-[0_0_30px_rgba(200,160,80,0.2)] cursor-pointer relative group"
                 >
-                  <p className="font-display text-[10px] tracking-widest text-gold">{item.name}</p>
-                  <p className="font-serif-lux text-sm md:text-base text-foreground mt-1" dir="rtl">{item.ar}</p>
-                  <p className="font-display text-xs text-gold mt-1">{item.price} EGP</p>
+                  <img src={item.img} alt={item.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-transparent" />
+                  <div className="relative z-10 px-2">
+                    <p className="font-display text-[10px] tracking-widest text-gold">{item.name}</p>
+                    <p className="font-serif-lux text-sm md:text-base text-foreground mt-1" dir="rtl">{item.ar}</p>
+                    <p className="font-display text-xs text-gold mt-1">{item.price} EGP</p>
+                  </div>
                 </motion.div>
               </motion.div>
             );
@@ -219,8 +273,30 @@ function CircularMenu() {
       </div>
 
       <p className="text-center mt-12 font-display text-xs tracking-[0.3em] text-foreground/50">
-        ↻ SCROLL TO ROTATE THE WHEEL
+        ↻ DRAG THE WHEEL · TAP AN ITEM
       </p>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-3xl bg-ink border border-[var(--gold)]/40 text-foreground p-0 overflow-hidden">
+          {selected && (
+            <div className="grid md:grid-cols-2">
+              <div className="relative aspect-square md:aspect-auto">
+                <img src={selected.img} alt={selected.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent md:bg-gradient-to-r" />
+              </div>
+              <div className="p-8 md:p-10 flex flex-col justify-center">
+                <p className="font-display text-[10px] tracking-[0.4em] text-gold mb-3">— SIGNATURE —</p>
+                <h3 className="font-serif-lux text-4xl gold-text">{selected.name}</h3>
+                <p className="font-serif-lux text-2xl text-foreground/80 mt-1" dir="rtl">{selected.ar}</p>
+                <div className="h-px w-16 bg-[var(--gold)]/60 my-6" />
+                <p className="text-foreground/70 text-sm leading-relaxed">{selected.desc}</p>
+                <p className="text-foreground/70 text-sm leading-loose mt-3 font-serif-lux italic" dir="rtl">{selected.descAr}</p>
+                <p className="mt-8 font-display text-xs tracking-[0.3em] text-gold">PRICE · {selected.price} EGP</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
