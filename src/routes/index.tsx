@@ -1,24 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion, useScroll, useTransform, useMotionValue, AnimatePresence } from "framer-motion";
+import { useRef, useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import heroImg from "@/assets/hero-cafe.jpg";
 import milkshakeImg from "@/assets/milkshake.jpg";
 import mojitoImg from "@/assets/mojito.jpg";
 import grapeImg from "@/assets/grape-slush.jpg";
+import espressoImg from "@/assets/menu-espresso.jpg";
+import turkishImg from "@/assets/menu-turkish.jpg";
+import latteImg from "@/assets/menu-latte.jpg";
+import cappImg from "@/assets/menu-cappuccino.jpg";
+import hotchocImg from "@/assets/menu-hotchoc.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const MENU_ITEMS = [
-  { name: "Espresso", ar: "إسبريسو", price: "٦٥" },
-  { name: "Turkish Coffee", ar: "قهوة تركي", price: "٥٥" },
-  { name: "Iced Latte", ar: "آيس لاتيه", price: "٨٥" },
-  { name: "Oreo Shake", ar: "أوريو شيك", price: "١٢٠" },
-  { name: "Mojito", ar: "موهيتو", price: "٩٥" },
-  { name: "Grape Slush", ar: "جريب سلاش", price: "١١٠" },
-  { name: "Cappuccino", ar: "كابتشينو", price: "٧٥" },
-  { name: "Hot Chocolate", ar: "شوكولاتة ساخنة", price: "٩٠" },
+type MenuItem = { name: string; ar: string; price: string; img: string; desc: string; descAr: string };
+const MENU_ITEMS: MenuItem[] = [
+  { name: "Espresso", ar: "إسبريسو", price: "٦٥", img: espressoImg,
+    desc: "A single, intense shot of dark-roasted Arabica — velvet crema, deep cocoa notes.",
+    descAr: "جرعة مركّزة من حبوب عربية داكنة التحميص — كريما مخملية بنكهة الكاكاو العميقة." },
+  { name: "Turkish Coffee", ar: "قهوة تركي", price: "٥٥", img: turkishImg,
+    desc: "Slow-brewed in copper on hot sand, served with cardamom and Turkish delight.",
+    descAr: "تُخمّر ببطء على النار الهادئة مع الهيل، تُقدَّم مع الملبن التركي الفاخر." },
+  { name: "Iced Latte", ar: "آيس لاتيه", price: "٨٥", img: latteImg,
+    desc: "Chilled espresso layered over silk milk and hand-cut ice.",
+    descAr: "إسبريسو مثلج مع طبقات من الحليب الحريري ومكعبات ثلج نقيّة." },
+  { name: "Oreo Shake", ar: "أوريو شيك", price: "١٢٠", img: milkshakeImg,
+    desc: "Crushed Oreo folded into vanilla-bean cream, topped with whipped clouds.",
+    descAr: "قطع أوريو مع كريمة الفانيليا الطبيعية، مُتوّجة بغيوم من الكريمة المخفوقة." },
+  { name: "Mojito", ar: "موهيتو", price: "٩٥", img: mojitoImg,
+    desc: "Fresh mint muddled with lime and sparkling water — served in an artisan jar.",
+    descAr: "نعناع طازج مع الليمون والماء الفوّار — يُقدَّم في مرطبان حرفي." },
+  { name: "Grape Slush", ar: "جريب سلاش", price: "١١٠", img: grapeImg,
+    desc: "Iced violet-grape granita crowned with fresh mint bouquet.",
+    descAr: "جرانيتا العنب البنفسجي المثلج مع باقة من النعناع الطازج." },
+  { name: "Cappuccino", ar: "كابتشينو", price: "٧٥", img: cappImg,
+    desc: "Espresso, steamed milk, and a delicate foam heart — perfectly balanced.",
+    descAr: "إسبريسو مع حليب مبخّر ورغوة ناعمة على شكل قلب — توازن مثالي." },
+  { name: "Hot Chocolate", ar: "شوكولاتة ساخنة", price: "٩٠", img: hotchocImg,
+    desc: "Belgian dark chocolate melted into cream, shaved chocolate on top.",
+    descAr: "شوكولاتة بلجيكية داكنة ذائبة في الكريمة مع رقائق الشوكولاتة." },
 ];
 
 function Nav() {
@@ -134,10 +157,48 @@ function Hero() {
 
 function CircularMenu() {
   const ref = useRef<HTMLDivElement>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
-  const counterRotate = useTransform(scrollYProgress, [0, 1], [0, -360]);
+  const scrollRotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
+  const dragOffset = useMotionValue(0);
+  const rotate = useTransform<number, number>(
+    [scrollRotate, dragOffset],
+    ([s, d]) => s + d,
+  );
+  const counterRotate = useTransform(rotate, (r) => -r);
   const radius = 240;
+
+  const [selected, setSelected] = useState<MenuItem | null>(null);
+  const dragState = useRef({ dragging: false, lastAngle: 0, moved: 0 });
+
+  const angleFromCenter = (clientX: number, clientY: number) => {
+    const el = wheelRef.current;
+    if (!el) return 0;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragState.current.dragging = true;
+    dragState.current.moved = 0;
+    dragState.current.lastAngle = angleFromCenter(e.clientX, e.clientY);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragState.current.dragging) return;
+    const a = angleFromCenter(e.clientX, e.clientY);
+    let delta = a - dragState.current.lastAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    dragState.current.lastAngle = a;
+    dragState.current.moved += Math.abs(delta);
+    dragOffset.set(dragOffset.get() + delta);
+  };
+  const onPointerUp = () => {
+    dragState.current.dragging = false;
+  };
 
   return (
     <section id="menu" ref={ref} className="relative py-32 md:py-48 overflow-hidden bg-ink">
@@ -151,8 +212,16 @@ function CircularMenu() {
         <p className="mt-4 text-foreground/60 font-serif-lux italic" dir="rtl">اختيارات دقيقة من ماسترز القهوة</p>
       </div>
 
-      <div className="relative h-[600px] md:h-[700px] flex items-center justify-center">
-        <motion.div style={{ rotate }} className="relative w-[500px] h-[500px] md:w-[640px] md:h-[640px]">
+      <div className="relative h-[600px] md:h-[700px] flex items-center justify-center touch-none select-none">
+        <motion.div
+          ref={wheelRef}
+          style={{ rotate }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className="relative w-[500px] h-[500px] md:w-[640px] md:h-[640px] cursor-grab active:cursor-grabbing"
+        >
           {/* Outer decorative rings */}
           <div className="absolute inset-0 rounded-full border border-[var(--gold)]/30" />
           <div className="absolute inset-8 rounded-full border border-[var(--gold)]/20" />
@@ -175,11 +244,19 @@ function CircularMenu() {
               >
                 <motion.div
                   style={{ rotate: counterRotate }}
-                  className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-[var(--gold-deep)]/20 to-ink border border-[var(--gold)]/40 backdrop-blur-sm flex flex-col items-center justify-center text-center px-2 hover:scale-110 transition-transform shadow-[0_0_30px_rgba(200,160,80,0.15)]"
+                  onClick={(e) => {
+                    if (dragState.current.moved > 8) { e.preventDefault(); return; }
+                    setSelected(item);
+                  }}
+                  className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border border-[var(--gold)]/40 backdrop-blur-sm flex flex-col items-center justify-center text-center hover:scale-110 hover:border-[var(--gold)] transition-all shadow-[0_0_30px_rgba(200,160,80,0.2)] cursor-pointer relative group"
                 >
-                  <p className="font-display text-[10px] tracking-widest text-gold">{item.name}</p>
-                  <p className="font-serif-lux text-sm md:text-base text-foreground mt-1" dir="rtl">{item.ar}</p>
-                  <p className="font-display text-xs text-gold mt-1">{item.price} EGP</p>
+                  <img src={item.img} alt={item.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-transparent" />
+                  <div className="relative z-10 px-2">
+                    <p className="font-display text-[10px] tracking-widest text-gold">{item.name}</p>
+                    <p className="font-serif-lux text-sm md:text-base text-foreground mt-1" dir="rtl">{item.ar}</p>
+                    <p className="font-display text-xs text-gold mt-1">{item.price} EGP</p>
+                  </div>
                 </motion.div>
               </motion.div>
             );
@@ -196,8 +273,30 @@ function CircularMenu() {
       </div>
 
       <p className="text-center mt-12 font-display text-xs tracking-[0.3em] text-foreground/50">
-        ↻ SCROLL TO ROTATE THE WHEEL
+        ↻ DRAG THE WHEEL · TAP AN ITEM
       </p>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-3xl bg-ink border border-[var(--gold)]/40 text-foreground p-0 overflow-hidden">
+          {selected && (
+            <div className="grid md:grid-cols-2">
+              <div className="relative aspect-square md:aspect-auto">
+                <img src={selected.img} alt={selected.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent md:bg-gradient-to-r" />
+              </div>
+              <div className="p-8 md:p-10 flex flex-col justify-center">
+                <p className="font-display text-[10px] tracking-[0.4em] text-gold mb-3">— SIGNATURE —</p>
+                <h3 className="font-serif-lux text-4xl gold-text">{selected.name}</h3>
+                <p className="font-serif-lux text-2xl text-foreground/80 mt-1" dir="rtl">{selected.ar}</p>
+                <div className="h-px w-16 bg-[var(--gold)]/60 my-6" />
+                <p className="text-foreground/70 text-sm leading-relaxed">{selected.desc}</p>
+                <p className="text-foreground/70 text-sm leading-loose mt-3 font-serif-lux italic" dir="rtl">{selected.descAr}</p>
+                <p className="mt-8 font-display text-xs tracking-[0.3em] text-gold">PRICE · {selected.price} EGP</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
@@ -352,6 +451,51 @@ function Visit() {
         </motion.div>
       </div>
 
+    </section>
+  );
+}
+
+function Location() {
+  return (
+    <section id="location" className="relative bg-ink border-t border-[var(--gold)]/20 py-24 md:py-32">
+      <div className="max-w-6xl mx-auto px-6 text-center mb-12">
+        <p className="font-display text-xs tracking-[0.4em] text-gold mb-4">— FIND US —</p>
+        <h2 className="font-serif-lux text-5xl md:text-6xl gold-text">On The Map</h2>
+        <p className="mt-4 text-foreground/60 font-serif-lux italic" dir="rtl">تعال زُرنا — نحن في انتظارك</p>
+      </div>
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1 }}
+          className="relative rounded-sm overflow-hidden border border-[var(--gold)]/40 shadow-[0_0_60px_rgba(200,160,80,0.15)]"
+        >
+          <iframe
+            title="2 Million Cafe location"
+            src="https://www.google.com/maps?q=Cairo,Egypt&output=embed"
+            width="100%"
+            height="480"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="w-full block grayscale contrast-125"
+            style={{ border: 0 }}
+          />
+          <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-[var(--gold)]/20" />
+        </motion.div>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-serif-lux text-lg text-foreground/80" dir="rtl">شارع النيل الكبير، القاهرة، مصر</p>
+          <a
+            href="https://www.google.com/maps/dir/?api=1&destination=Cairo,Egypt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 py-3 border border-[var(--gold)] text-gold font-display text-xs tracking-[0.35em] hover:bg-[var(--gold)] hover:text-primary-foreground transition-all"
+          >
+            GET DIRECTIONS →
+          </a>
+        </div>
+      </div>
+
       <footer className="mt-24 pt-8 border-t border-[var(--gold)]/10 text-center">
         <p className="font-display text-[10px] tracking-[0.4em] text-foreground/40">
           © 2 MILLION CAFE · CRAFTED WITH PASSION
@@ -370,6 +514,7 @@ function Index() {
       <Signature />
       <Story />
       <Visit />
+      <Location />
     </main>
   );
 }
