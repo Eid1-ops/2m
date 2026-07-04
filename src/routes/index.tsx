@@ -451,6 +451,51 @@ function Visit() {
         </motion.div>
       </div>
 
+    </section>
+  );
+}
+
+function Location() {
+  return (
+    <section id="location" className="relative bg-ink border-t border-[var(--gold)]/20 py-24 md:py-32">
+      <div className="max-w-6xl mx-auto px-6 text-center mb-12">
+        <p className="font-display text-xs tracking-[0.4em] text-gold mb-4">— FIND US —</p>
+        <h2 className="font-serif-lux text-5xl md:text-6xl gold-text">On The Map</h2>
+        <p className="mt-4 text-foreground/60 font-serif-lux italic" dir="rtl">تعال زُرنا — نحن في انتظارك</p>
+      </div>
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1 }}
+          className="relative rounded-sm overflow-hidden border border-[var(--gold)]/40 shadow-[0_0_60px_rgba(200,160,80,0.15)]"
+        >
+          <iframe
+            title="2 Million Cafe location"
+            src="https://www.google.com/maps?q=Cairo,Egypt&output=embed"
+            width="100%"
+            height="480"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="w-full block grayscale contrast-125"
+            style={{ border: 0 }}
+          />
+          <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-[var(--gold)]/20" />
+        </motion.div>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-serif-lux text-lg text-foreground/80" dir="rtl">شارع النيل الكبير، القاهرة، مصر</p>
+          <a
+            href="https://www.google.com/maps/dir/?api=1&destination=Cairo,Egypt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 py-3 border border-[var(--gold)] text-gold font-display text-xs tracking-[0.35em] hover:bg-[var(--gold)] hover:text-primary-foreground transition-all"
+          >
+            GET DIRECTIONS →
+          </a>
+        </div>
+      </div>
+
       <footer className="mt-24 pt-8 border-t border-[var(--gold)]/10 text-center">
         <p className="font-display text-[10px] tracking-[0.4em] text-foreground/40">
           © 2 MILLION CAFE · CRAFTED WITH PASSION
@@ -469,6 +514,7 @@ function Index() {
       <Signature />
       <Story />
       <Visit />
+      <Location />
     </main>
   );
 }
