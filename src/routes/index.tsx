@@ -1,24 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion, useScroll, useTransform, useMotionValue, AnimatePresence } from "framer-motion";
+import { useRef, useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import heroImg from "@/assets/hero-cafe.jpg";
 import milkshakeImg from "@/assets/milkshake.jpg";
 import mojitoImg from "@/assets/mojito.jpg";
 import grapeImg from "@/assets/grape-slush.jpg";
+import espressoImg from "@/assets/menu-espresso.jpg";
+import turkishImg from "@/assets/menu-turkish.jpg";
+import latteImg from "@/assets/menu-latte.jpg";
+import cappImg from "@/assets/menu-cappuccino.jpg";
+import hotchocImg from "@/assets/menu-hotchoc.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const MENU_ITEMS = [
-  { name: "Espresso", ar: "إسبريسو", price: "٦٥" },
-  { name: "Turkish Coffee", ar: "قهوة تركي", price: "٥٥" },
-  { name: "Iced Latte", ar: "آيس لاتيه", price: "٨٥" },
-  { name: "Oreo Shake", ar: "أوريو شيك", price: "١٢٠" },
-  { name: "Mojito", ar: "موهيتو", price: "٩٥" },
-  { name: "Grape Slush", ar: "جريب سلاش", price: "١١٠" },
-  { name: "Cappuccino", ar: "كابتشينو", price: "٧٥" },
-  { name: "Hot Chocolate", ar: "شوكولاتة ساخنة", price: "٩٠" },
+type MenuItem = { name: string; ar: string; price: string; img: string; desc: string; descAr: string };
+const MENU_ITEMS: MenuItem[] = [
+  { name: "Espresso", ar: "إسبريسو", price: "٦٥", img: espressoImg,
+    desc: "A single, intense shot of dark-roasted Arabica — velvet crema, deep cocoa notes.",
+    descAr: "جرعة مركّزة من حبوب عربية داكنة التحميص — كريما مخملية بنكهة الكاكاو العميقة." },
+  { name: "Turkish Coffee", ar: "قهوة تركي", price: "٥٥", img: turkishImg,
+    desc: "Slow-brewed in copper on hot sand, served with cardamom and Turkish delight.",
+    descAr: "تُخمّر ببطء على النار الهادئة مع الهيل، تُقدَّم مع الملبن التركي الفاخر." },
+  { name: "Iced Latte", ar: "آيس لاتيه", price: "٨٥", img: latteImg,
+    desc: "Chilled espresso layered over silk milk and hand-cut ice.",
+    descAr: "إسبريسو مثلج مع طبقات من الحليب الحريري ومكعبات ثلج نقيّة." },
+  { name: "Oreo Shake", ar: "أوريو شيك", price: "١٢٠", img: milkshakeImg,
+    desc: "Crushed Oreo folded into vanilla-bean cream, topped with whipped clouds.",
+    descAr: "قطع أوريو مع كريمة الفانيليا الطبيعية، مُتوّجة بغيوم من الكريمة المخفوقة." },
+  { name: "Mojito", ar: "موهيتو", price: "٩٥", img: mojitoImg,
+    desc: "Fresh mint muddled with lime and sparkling water — served in an artisan jar.",
+    descAr: "نعناع طازج مع الليمون والماء الفوّار — يُقدَّم في مرطبان حرفي." },
+  { name: "Grape Slush", ar: "جريب سلاش", price: "١١٠", img: grapeImg,
+    desc: "Iced violet-grape granita crowned with fresh mint bouquet.",
+    descAr: "جرانيتا العنب البنفسجي المثلج مع باقة من النعناع الطازج." },
+  { name: "Cappuccino", ar: "كابتشينو", price: "٧٥", img: cappImg,
+    desc: "Espresso, steamed milk, and a delicate foam heart — perfectly balanced.",
+    descAr: "إسبريسو مع حليب مبخّر ورغوة ناعمة على شكل قلب — توازن مثالي." },
+  { name: "Hot Chocolate", ar: "شوكولاتة ساخنة", price: "٩٠", img: hotchocImg,
+    desc: "Belgian dark chocolate melted into cream, shaved chocolate on top.",
+    descAr: "شوكولاتة بلجيكية داكنة ذائبة في الكريمة مع رقائق الشوكولاتة." },
 ];
 
 function Nav() {
