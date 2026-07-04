@@ -31,7 +31,4 @@ dist-ssr
 *.sln
 *.sw?
 
-# Video files (too large for git)
-*.mp4
-*.MP4
 package-lock.json
