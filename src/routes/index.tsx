@@ -136,6 +136,7 @@ function CircularMenu() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const rotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
+  const counterRotate = useTransform(scrollYProgress, [0, 1], [0, -360]);
   const radius = 240;
 
   return (
@@ -173,7 +174,7 @@ function CircularMenu() {
                 className="absolute"
               >
                 <motion.div
-                  style={{ rotate: useTransform(rotate, (r) => -r) }}
+                  style={{ rotate: counterRotate }}
                   className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-[var(--gold-deep)]/20 to-ink border border-[var(--gold)]/40 backdrop-blur-sm flex flex-col items-center justify-center text-center px-2 hover:scale-110 transition-transform shadow-[0_0_30px_rgba(200,160,80,0.15)]"
                 >
                   <p className="font-display text-[10px] tracking-widest text-gold">{item.name}</p>
