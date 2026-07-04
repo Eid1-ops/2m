@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion, useScroll, useTransform, useMotionValue, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import heroImg from "@/assets/hero-cafe.jpg";
+import heroVideo from "@/assets/hero-bg.mp4";
 import milkshakeImg from "@/assets/milkshake.jpg";
 import mojitoImg from "@/assets/mojito.jpg";
 import grapeImg from "@/assets/grape-slush.jpg";
@@ -75,13 +75,13 @@ function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <section ref={ref} className="relative h-screen w-full overflow-hidden bg-ink">
+    <section ref={ref} className="relative h-[70vh] md:h-screen w-full overflow-hidden bg-ink">
       <motion.div style={{ y, opacity }} className="absolute inset-0">
         <div className="absolute inset-0 animate-ken-burns">
-          <img src={heroImg} alt="2 Million Cafe interior" className="w-full h-full object-cover" width={1920} height={1088} />
+          <video autoPlay loop muted playsInline className="w-full h-full object-cover" src={heroVideo} />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/40 to-ink" />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-ink/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/20 to-ink/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-ink/50 via-transparent to-ink/30" />
       </motion.div>
 
       {/* Steam particles */}
@@ -122,7 +122,7 @@ function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5, delay: 1.8 }}
-          className="font-display text-lg md:text-2xl tracking-[0.4em] text-foreground/90"
+          className="font-display text-lg md:text-2xl tracking-[0.4em] text-foreground"
         >
           C A F E
         </motion.p>
@@ -131,7 +131,7 @@ function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 2.2 }}
-          className="mt-10 max-w-xl text-foreground/70 text-base md:text-lg font-serif-lux italic"
+          className="mt-10 max-w-xl text-foreground/90 text-base md:text-lg font-serif-lux italic"
           dir="rtl"
         >
           حيث تلتقي الفخامة بالنكهة — تجربة قهوة استثنائية من الطراز العالمي.
@@ -169,7 +169,7 @@ function CircularMenu() {
   const radius = 240;
 
   const [selected, setSelected] = useState<MenuItem | null>(null);
-  const dragState = useRef({ dragging: false, lastAngle: 0, moved: 0 });
+  const dragState = useRef({ dragging: false, lastAngle: 0, moved: 0, startX: 0, startY: 0 });
 
   const angleFromCenter = (clientX: number, clientY: number) => {
     const el = wheelRef.current;
@@ -184,10 +184,19 @@ function CircularMenu() {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragState.current.dragging = true;
     dragState.current.moved = 0;
+    dragState.current.startX = e.clientX;
+    dragState.current.startY = e.clientY;
     dragState.current.lastAngle = angleFromCenter(e.clientX, e.clientY);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragState.current.dragging) return;
+    const dx = Math.abs(e.clientX - dragState.current.startX);
+    const dy = Math.abs(e.clientY - dragState.current.startY);
+    if (dy > dx * 2) {
+      dragState.current.dragging = false;
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+      return;
+    }
     const a = angleFromCenter(e.clientX, e.clientY);
     let delta = a - dragState.current.lastAngle;
     if (delta > 180) delta -= 360;
@@ -212,7 +221,7 @@ function CircularMenu() {
         <p className="mt-4 text-foreground/60 font-serif-lux italic" dir="rtl">اختيارات دقيقة من ماسترز القهوة</p>
       </div>
 
-      <div className="relative h-[600px] md:h-[700px] flex items-center justify-center touch-none select-none">
+      <div className="relative h-[500px] md:h-[700px] flex items-center justify-center select-none" style={{ touchAction: "pan-y" }}>
         <motion.div
           ref={wheelRef}
           style={{ rotate }}
@@ -473,7 +482,7 @@ function Location() {
         >
           <iframe
             title="2 Million Cafe location"
-            src="https://www.google.com/maps?q=Cairo,Egypt&output=embed"
+            src="https://www.google.com/maps?q=2+Million+Cafe+%26+Restaurant+Sadat+City&output=embed"
             width="100%"
             height="480"
             loading="lazy"
@@ -484,9 +493,9 @@ function Location() {
           <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-[var(--gold)]/20" />
         </motion.div>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-serif-lux text-lg text-foreground/80" dir="rtl">شارع النيل الكبير، القاهرة، مصر</p>
+          <p className="font-serif-lux text-lg text-foreground/80" dir="rtl">بجوار بنزينة الوطنية والجامعة الأهلية، طريق الزيتون، مدينة السادات، المنوفية</p>
           <a
-            href="https://www.google.com/maps/dir/?api=1&destination=Cairo,Egypt"
+            href="https://www.google.com/maps/dir/?api=1&destination=2+Million+Cafe+%26+Restaurant+Sadat+City"
             target="_blank"
             rel="noopener noreferrer"
             className="px-8 py-3 border border-[var(--gold)] text-gold font-display text-xs tracking-[0.35em] hover:bg-[var(--gold)] hover:text-primary-foreground transition-all"
