@@ -310,6 +310,129 @@ function CircularMenu() {
   );
 }
 
+const CATEGORIES = [
+  {
+    name: "قهوة",
+    en: "Coffee",
+    items: ["Espresso", "Turkish Coffee", "Cappuccino"],
+  },
+  {
+    name: "مشروبات باردة",
+    en: "Cold & Iced",
+    items: ["Iced Latte", "Mojito", "Grape Slush"],
+  },
+  {
+    name: "التوقيع",
+    en: "Signature",
+    items: ["Oreo Shake", "Hot Chocolate"],
+  },
+];
+
+const MENU_AR: Record<string, { name: string; en: string }> = {
+  Espresso: { name: "إسبريسو", en: "Espresso" },
+  "Turkish Coffee": { name: "قهوة تركي", en: "Turkish Coffee" },
+  Cappuccino: { name: "كابتشينو", en: "Cappuccino" },
+  "Iced Latte": { name: "لاتيه مثلج", en: "Iced Latte" },
+  Mojito: { name: "موهيتو", en: "Mojito" },
+  "Grape Slush": { name: "سلاش عنب", en: "Grape Slush" },
+  "Oreo Shake": { name: "أوريو شيك", en: "Oreo Shake" },
+  "Hot Chocolate": { name: "شوكولاتة ساخنة", en: "Hot Chocolate" },
+};
+
+function MenuBoard() {
+  return (
+    <section id="menu-board" className="relative py-32 md:py-48 overflow-hidden bg-[#080808]">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-[0.015]" style={{
+        backgroundImage: "radial-gradient(circle at 1px 1px, var(--gold) 1px, transparent 0)",
+        backgroundSize: "40px 40px",
+      }} />
+
+      <div className="max-w-3xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.7 }}
+        >
+          {/* Menu Card */}
+          <div className="border border-[var(--gold)]/30 p-[6px]">
+            <div className="border border-[var(--gold)]/10 bg-[#0c0c0c]">
+              {/* Top bar */}
+              <div className="h-[3px] bg-gradient-to-r from-transparent via-[var(--gold)]/30 to-transparent" />
+
+              <div className="px-8 md:px-14 py-10 md:py-14" dir="rtl">
+                {/* ===== HEADER ===== */}
+                <div className="text-center mb-12" dir="rtl">
+                  {/* Logo */}
+                  <div className="w-[72px] h-[72px] mx-auto mb-5 rounded-full border-2 border-[var(--gold)] flex items-center justify-center">
+                    <span className="font-serif-lux text-3xl gold-text">2M</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <span className="block h-px w-16 bg-gradient-to-r from-[var(--gold)]/30 to-transparent" />
+                    <span className="font-display text-[9px] tracking-[0.35em] text-gold">منذ 2024</span>
+                    <span className="block h-px w-16 bg-gradient-to-l from-[var(--gold)]/30 to-transparent" />
+                  </div>
+                  <h2 className="font-serif-lux text-[42px] md:text-6xl gold-text tracking-wide leading-none">قائمة المشروبات</h2>
+                </div>
+
+                {/* ===== ITEMS ===== */}
+                {CATEGORIES.map((cat, ci) => {
+                  const catItems = MENU_ITEMS.filter((item) => cat.items.includes(item.name));
+                  return (
+                    <div key={cat.name} className="mb-10 last:mb-0">
+                      {/* Category */}
+                      <div className="flex items-center gap-3 mb-5">
+                        <span className="flex-1 h-px bg-gradient-to-l from-[var(--gold)]/20 to-transparent" />
+                        <span className="font-serif-lux text-xs text-foreground/30" dir="ltr">{cat.en}</span>
+                        <span className="font-display text-[10px] tracking-[0.3em] text-gold">{cat.name}</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        {catItems.map((item, ii) => {
+                          const ar = MENU_AR[item.name];
+                          return (
+                            <div
+                              key={item.name}
+                              className="flex items-baseline justify-between py-2 px-3 hover:bg-[var(--gold)]/[0.02] transition-colors"
+                            >
+                              <span className="font-display text-sm tracking-wider text-gold whitespace-nowrap order-3">{item.price} ج.م</span>
+                              <div className="flex items-baseline gap-2 min-w-0 flex-1 overflow-hidden order-1">
+                                <span className="font-serif-lux text-[17px] md:text-lg text-foreground whitespace-nowrap">
+                                  {ar?.name || item.name}
+                                </span>
+                                <span className="hidden sm:inline font-serif-lux text-xs text-foreground/30" dir="ltr">{ar?.en || item.name}</span>
+                                <span className="flex-1 min-w-[20px] border-b border-dotted border-[var(--gold)]/20 mx-2" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* ===== FOOTER ===== */}
+                <div className="mt-12 pt-6 text-center border-t border-[var(--gold)]/10">
+                  <p className="font-serif-lux italic text-foreground/15 text-sm" dir="rtl">
+                    حيث تلتقي الفخامة بالنكهة
+                  </p>
+                  <p className="font-display text-[8px] tracking-[0.45em] text-foreground/25 uppercase mt-2">
+                    2 Million Cafe
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom bar */}
+              <div className="h-[3px] bg-gradient-to-r from-transparent via-[var(--gold)]/30 to-transparent" />
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 function Signature() {
   const drinks = [
     { img: milkshakeImg, name: "Oreo Dream", ar: "أوريو دريم", desc: "Whipped clouds over cookie-crushed milkshake." },
@@ -520,6 +643,7 @@ function Index() {
       <Nav />
       <Hero />
       <CircularMenu />
+      <MenuBoard />
       <Signature />
       <Story />
       <Visit />
