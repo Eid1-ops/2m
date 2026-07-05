@@ -431,7 +431,7 @@ function Visit() {
             </div>
             <div>
               <p className="font-display text-xs tracking-[0.3em] text-gold mb-1">LOCATION</p>
-              <p className="font-serif-lux text-xl" dir="rtl">شارع النيل الكبير، القاهرة</p>
+              <p className="font-serif-lux text-xl" dir="rtl"> بجوار بنزينة الوطنية علي طريق الزيتون</p>
             </div>
             <div>
               <p className="font-display text-xs tracking-[0.3em] text-gold mb-1">RESERVATIONS</p>
